@@ -15,7 +15,7 @@ A **React Native / Expo** mobile app that lets users build a food preference pro
 **Option 1 — Deep link (tap on your device)**
 
 ```
-exp://u.expo.dev/a925ee3c-804f-43f1-808b-da64ec46bda2/group/335610f0-c1b8-4540-ad82-011f55dd382e
+exp://u.expo.dev/a925ee3c-804f-43f1-808b-da64ec46bda2/group/9d76efc9-c45a-4a8f-a3bb-f77529abe508
 ```
 
 **Option 2 — Scan this QR code with Expo Go**
@@ -28,14 +28,12 @@ exp://u.expo.dev/a925ee3c-804f-43f1-808b-da64ec46bda2/group/335610f0-c1b8-4540-a
 |---|---|
 | **Expo project** | `@shivankgupta/calorai` |
 | **Branch** | `main` (always latest) |
-| **Runtime version** | `1.0.0` |
-| **Latest update group** | `335610f0-c1b8-4540-ad82-011f55dd382e` |
-| **EAS Dashboard** | [View on expo.dev](https://expo.dev/accounts/shivankgupta/projects/calorai/updates/335610f0-c1b8-4540-ad82-011f55dd382e) |
+| **Runtime version** | `exposdk:54.0.0` |
+| **Latest update group** | `9d76efc9-c45a-4a8f-a3bb-f77529abe508` |
+| **EAS Dashboard** | [View on expo.dev](https://expo.dev/accounts/shivankgupta/projects/calorai/updates/9d76efc9-c45a-4a8f-a3bb-f77529abe508) |
 | **Platform** | iOS + Android |
 
-> ⚠️ **Important:** EAS Update requires the **native runtime version to match**. Since this project uses Expo SDK 54 with `runtimeVersion: { policy: "appVersion" }`, you need to either:
-> - Open it from the Expo Go dashboard QR (which handles this automatically), **or**
-> - Clone the repo and run `npx expo start` locally for the most reliable experience.
+> ✅ Uses `runtimeVersion: { policy: "sdkVersion" }` — fully compatible with Expo Go out of the box. Just scan and go.
 
 ---
 
