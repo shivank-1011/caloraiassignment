@@ -1,10 +1,5 @@
 import React, { useRef, useState } from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
@@ -13,12 +8,15 @@ import CardStack from '../components/CardStack';
 import ProgressBar from '../components/ProgressBar';
 import ActionButton from '../components/ActionButton';
 import { FoodCardRef } from '../components/FoodCard';
+import CrossIcon from '../../assets/icons/cross.svg';
+import StarIcon from '../../assets/icons/star.svg';
+import QuestionIcon from '../../assets/icons/question.svg';
+import CarrotIcon from '../../assets/icons/carrot.svg';
 import { Colors, Spacing } from '../constants';
 import { RootStackParamList, SwipeDirection, SwipeResult } from '../types';
 import { foods } from '../data';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Swipe'>;
-
 
 export default function SwipeScreen() {
   const navigation = useNavigation<NavProp>();
@@ -71,37 +69,49 @@ export default function SwipeScreen() {
         </View>
 
         <View style={styles.actions}>
-          <ActionButton
-            icon="✕"
-            color={Colors.dislike}
-            size="lg"
-            onPress={() => triggerSwipe('dislike')}
-          />
-          <ActionButton
-            icon="?"
-            color="rgba(255,255,255,0.15)"
-            size="sm"
-            onPress={() => triggerSwipe('unsure')}
-          />
-          <ActionButton
-            icon="★"
-            color={Colors.superlike}
-            size="sm"
-            onPress={() => triggerSwipe('superlike')}
-          />
-          <ActionButton
-            icon="♥"
-            color={Colors.like}
-            size="lg"
-            onPress={() => triggerSwipe('like')}
-          />
-        </View>
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={CrossIcon}
+              iconColor="#FFFFFF"
+              bgColor={Colors.dislike}
+              size="lg"
+              onPress={() => triggerSwipe('dislike')}
+            />
+            <Text style={[styles.actionLabel, { color: Colors.dislike }]}>Swipe Left</Text>
+          </View>
 
-        <View style={styles.actionLabels}>
-          <Text style={[styles.actionLabel, { color: Colors.dislike }]}>Swipe Left</Text>
-          <Text style={[styles.actionLabel, { color: Colors.unsure }]}>Not Sure</Text>
-          <Text style={[styles.actionLabel, { color: Colors.superlike }]}>Super Like</Text>
-          <Text style={[styles.actionLabel, { color: Colors.like }]}>Swipe Right</Text>
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={QuestionIcon}
+              iconColor="#FFFFFF"
+              bgColor="rgba(255,255,255,0.15)"
+              size="sm"
+              onPress={() => triggerSwipe('unsure')}
+            />
+            <Text style={[styles.actionLabel, { color: Colors.unsure }]}>Not Sure</Text>
+          </View>
+
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={StarIcon}
+              iconColor="#FFFFFF"
+              bgColor={Colors.superlike}
+              size="sm"
+              onPress={() => triggerSwipe('superlike')}
+            />
+            <Text style={[styles.actionLabel, { color: Colors.superlike }]}>Super Like</Text>
+          </View>
+
+          <View style={styles.actionItem}>
+            <ActionButton
+              Icon={CarrotIcon}
+              iconColor="#FFFFFF"
+              bgColor={Colors.like}
+              size="lg"
+              onPress={() => triggerSwipe('like')}
+            />
+            <Text style={[styles.actionLabel, { color: Colors.like }]}>Swipe Right</Text>
+          </View>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -116,7 +126,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   progressContainer: {
-    paddingHorizontal: 0,
     marginBottom: Spacing.lg,
   },
   cardArea: {
@@ -127,23 +136,18 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: Spacing.md,
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.xl,
   },
-  actionLabels: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  actionItem: {
     alignItems: 'center',
-    gap: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.lg,
+    gap: Spacing.xs,
   },
   actionLabel: {
     fontSize: 10,
     fontWeight: '500',
-    width: 64,
     textAlign: 'center',
   },
 });
