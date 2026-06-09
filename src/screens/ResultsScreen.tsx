@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   FlatList,
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -27,29 +28,13 @@ function buildPersonas(results: SwipeResult[]): TastePersona[] {
   });
 
   const personas: TastePersona[] = [];
-
-  if ((tagCounts['protein'] || 0) + (tagCounts['red-meat'] || 0) >= 2) {
-    personas.push({ emoji: '🥩', label: 'Carnivore' });
-  }
-  if ((tagCounts['italian'] || 0) >= 1) {
-    personas.push({ emoji: '🇮🇹', label: 'Italian Food' });
-  }
-  if ((tagCounts['fruit'] || 0) + (tagCounts['healthy'] || 0) >= 3) {
-    personas.push({ emoji: '🍇', label: 'Fruit-Lover' });
-  }
-  if ((tagCounts['japanese'] || 0) >= 1) {
-    personas.push({ emoji: '🇯🇵', label: 'Japanese Food' });
-  }
-  if ((tagCounts['vegan'] || 0) + (tagCounts['plant-based'] || 0) >= 1) {
-    personas.push({ emoji: '🌱', label: 'Plant-Based' });
-  }
-  if ((tagCounts['comfort'] || 0) >= 2) {
-    personas.push({ emoji: '🍔', label: 'Comfort Eater' });
-  }
-
-  if (personas.length === 0) {
-    personas.push({ emoji: '🍽️', label: 'Foodie' });
-  }
+  if ((tagCounts['protein'] || 0) + (tagCounts['red-meat'] || 0) >= 2) personas.push({ emoji: '🥩', label: 'Carnivore' });
+  if ((tagCounts['italian'] || 0) >= 1) personas.push({ emoji: '🇮🇹', label: 'Italian Food' });
+  if ((tagCounts['fruit'] || 0) + (tagCounts['healthy'] || 0) >= 3) personas.push({ emoji: '🍇', label: 'Fruit-Lover' });
+  if ((tagCounts['japanese'] || 0) >= 1) personas.push({ emoji: '🇯🇵', label: 'Japanese Food' });
+  if ((tagCounts['vegan'] || 0) + (tagCounts['plant-based'] || 0) >= 1) personas.push({ emoji: '🌱', label: 'Plant-Based' });
+  if ((tagCounts['comfort'] || 0) >= 2) personas.push({ emoji: '🍔', label: 'Comfort Eater' });
+  if (personas.length === 0) personas.push({ emoji: '🍽️', label: 'Foodie' });
 
   return personas.slice(0, 3);
 }
@@ -58,9 +43,7 @@ function buildLifestyleTraits(results: SwipeResult[]): string[] {
   const positive = results.filter((r) => r.direction === 'like' || r.direction === 'superlike');
   const tagCounts: Record<string, number> = {};
   positive.forEach(({ food }) => {
-    food.tags.forEach((tag) => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-    });
+    food.tags.forEach((tag) => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
   });
 
   const traits: string[] = [];
@@ -72,24 +55,42 @@ function buildLifestyleTraits(results: SwipeResult[]): string[] {
   return traits;
 }
 
-function FoodList({ foods, icon }: { foods: Food[]; icon: string }) {
+interface FoodSectionProps {
+  title: string;
+  subtitle: string;
+  headerEmoji: string;
+  foods: Food[];
+  accentColor: string;
+}
+
+function FoodSection({ title, subtitle, headerEmoji, foods, accentColor }: FoodSectionProps) {
+  if (foods.length === 0) return null;
   return (
-    <FlatList
-      data={foods}
-      keyExtractor={(item) => item.id.toString()}
-      scrollEnabled={false}
-      ItemSeparatorComponent={() => (
-        <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)' }} />
-      )}
-      renderItem={({ item }) => (
-        <View style={styles.listRow}>
-          <View style={styles.listIcon}>
-            <Text style={styles.listIconText}>{icon}</Text>
+    <GlassCard style={styles.card}>
+      <View style={styles.cardSection}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardHeaderEmoji}>{headerEmoji}</Text>
+          <View>
+            <Text style={styles.cardTitle}>{title}</Text>
+            <Text style={styles.cardSubtitle}>{subtitle}</Text>
           </View>
-          <Text style={styles.listItemText}>{item.name}</Text>
         </View>
-      )}
-    />
+        <View style={styles.divider} />
+        <FlatList
+          data={foods}
+          keyExtractor={(item) => item.id.toString()}
+          scrollEnabled={false}
+          ItemSeparatorComponent={() => <View style={styles.divider} />}
+          renderItem={({ item }) => (
+            <View style={styles.listRow}>
+              <Image source={{ uri: item.image }} style={styles.foodThumb} />
+              <Text style={styles.listItemText}>{item.name}</Text>
+              <View style={[styles.dot, { backgroundColor: accentColor }]} />
+            </View>
+          )}
+        />
+      </View>
+    </GlassCard>
   );
 }
 
@@ -102,7 +103,6 @@ export default function ResultsScreen() {
   const superliked = results.filter((r) => r.direction === 'superlike').map((r) => r.food);
   const disliked = results.filter((r) => r.direction === 'dislike').map((r) => r.food);
   const unsure = results.filter((r) => r.direction === 'unsure').map((r) => r.food);
-
   const personas = buildPersonas(results);
   const lifestyleTraits = buildLifestyleTraits(results);
 
@@ -115,11 +115,7 @@ export default function ResultsScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => navigation.goBack()}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
               <Text style={styles.backIcon}>‹</Text>
             </TouchableOpacity>
             <Text style={styles.heading}>Your Taste Profile</Text>
@@ -142,9 +138,7 @@ export default function ResultsScreen() {
                     <Text style={styles.personaEmoji}>{p.emoji}</Text>
                     <Text style={styles.personaLabel}>{p.label}</Text>
                   </View>
-                  {i < personas.length - 1 && (
-                    <View style={styles.personaDivider} />
-                  )}
+                  {i < personas.length - 1 && <View style={styles.personaDivider} />}
                 </React.Fragment>
               ))}
             </ScrollView>
@@ -160,82 +154,26 @@ export default function ResultsScreen() {
                     <Text style={styles.cardSubtitle}>We'll use this to tailor our advice & meal plan</Text>
                   </View>
                 </View>
-                <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: Spacing.sm }} />
-                {lifestyleTraits.map((trait) => (
-                  <View key={trait} style={styles.listRow}>
-                    <View style={[styles.listIcon, { backgroundColor: Colors.accentDark }]}>
-                      <Text style={styles.listIconText}>✓</Text>
+                <View style={styles.divider} />
+                {lifestyleTraits.map((trait, i) => (
+                  <React.Fragment key={trait}>
+                    <View style={styles.listRow}>
+                      <View style={[styles.checkIcon, { backgroundColor: Colors.accentDark }]}>
+                        <Text style={styles.checkText}>✓</Text>
+                      </View>
+                      <Text style={styles.listItemText}>{trait}</Text>
                     </View>
-                    <Text style={styles.listItemText}>{trait}</Text>
-                  </View>
+                    {i < lifestyleTraits.length - 1 && <View style={styles.divider} />}
+                  </React.Fragment>
                 ))}
               </View>
             </GlassCard>
           )}
 
-          {liked.length > 0 && (
-            <GlassCard style={styles.card}>
-              <View style={styles.cardSection}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardHeaderEmoji}>❤️</Text>
-                  <View>
-                    <Text style={styles.cardTitle}>Foods You Love</Text>
-                    <Text style={styles.cardSubtitle}>We'll Recommend These</Text>
-                  </View>
-                </View>
-                <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: Spacing.sm }} />
-                <FoodList foods={liked} icon="♥" />
-              </View>
-            </GlassCard>
-          )}
-
-          {superliked.length > 0 && (
-            <GlassCard style={styles.card}>
-              <View style={styles.cardSection}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardHeaderEmoji}>⭐</Text>
-                  <View>
-                    <Text style={styles.cardTitle}>Your Superlikes</Text>
-                    <Text style={styles.cardSubtitle}>Foods You Absolutely Love</Text>
-                  </View>
-                </View>
-                <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: Spacing.sm }} />
-                <FoodList foods={superliked} icon="★" />
-              </View>
-            </GlassCard>
-          )}
-
-          {unsure.length > 0 && (
-            <GlassCard style={styles.card}>
-              <View style={styles.cardSection}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardHeaderEmoji}>🤔</Text>
-                  <View>
-                    <Text style={styles.cardTitle}>You're Not Sure About</Text>
-                    <Text style={styles.cardSubtitle}>We'll ask again later</Text>
-                  </View>
-                </View>
-                <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: Spacing.sm }} />
-                <FoodList foods={unsure} icon="?" />
-              </View>
-            </GlassCard>
-          )}
-
-          {disliked.length > 0 && (
-            <GlassCard style={styles.card}>
-              <View style={styles.cardSection}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardHeaderEmoji}>🙅</Text>
-                  <View>
-                    <Text style={styles.cardTitle}>Foods You Hate</Text>
-                    <Text style={styles.cardSubtitle}>These will never be on the menu</Text>
-                  </View>
-                </View>
-                <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginBottom: Spacing.sm }} />
-                <FoodList foods={disliked} icon="✕" />
-              </View>
-            </GlassCard>
-          )}
+          <FoodSection title="Foods You Love" subtitle="We'll Recommend These" headerEmoji="❤️" foods={liked} accentColor={Colors.like} />
+          <FoodSection title="Your Superlikes" subtitle="Foods You Absolutely Love" headerEmoji="⭐" foods={superliked} accentColor={Colors.superlike} />
+          <FoodSection title="You're Not Sure About" subtitle="We'll ask again later" headerEmoji="🤔" foods={unsure} accentColor={Colors.unsure} />
+          <FoodSection title="Foods You Hate" subtitle="These will never be on the menu" headerEmoji="🙅" foods={disliked} accentColor={Colors.dislike} />
 
           <View style={{ height: Spacing.xl }} />
         </ScrollView>
@@ -247,18 +185,10 @@ export default function ResultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  safe: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: Spacing.lg,
-  },
+  root: { flex: 1 },
+  safe: { flex: 1 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: Spacing.lg },
   header: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
@@ -309,9 +239,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginBottom: Spacing.xs,
   },
-  cardHeaderEmoji: {
-    fontSize: 20,
-  },
+  cardHeaderEmoji: { fontSize: 20 },
   cardTitle: {
     fontSize: Typography.base,
     fontWeight: Typography.bold,
@@ -321,6 +249,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     color: Colors.textSecondary,
   },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginVertical: Spacing.xs,
+  },
   personaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -329,13 +262,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     gap: Spacing.lg,
   },
-  personaItem: {
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  personaEmoji: {
-    fontSize: 40,
-  },
+  personaItem: { alignItems: 'center', gap: Spacing.sm },
+  personaEmoji: { fontSize: 40 },
   personaLabel: {
     fontSize: Typography.sm,
     fontWeight: Typography.semibold,
@@ -352,21 +280,32 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     gap: Spacing.sm,
   },
-  listIcon: {
+  foodThumb: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  listItemText: {
+    flex: 1,
+    fontSize: Typography.base,
+    color: Colors.textPrimary,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: Radius.full,
+  },
+  checkIcon: {
     width: 28,
     height: 28,
     borderRadius: Radius.full,
-    backgroundColor: Colors.accentDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  listIconText: {
+  checkText: {
     fontSize: 12,
     color: Colors.textPrimary,
     fontWeight: Typography.bold,
-  },
-  listItemText: {
-    fontSize: Typography.base,
-    color: Colors.textPrimary,
   },
 });
