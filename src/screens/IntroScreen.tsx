@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: Colors.textPrimary,
     lineHeight: 28,
-    marginTop: -6,
+    marginTop: Platform.OS === 'ios' ? 8 : -5,
     marginLeft: -2,
   },
   heading: {

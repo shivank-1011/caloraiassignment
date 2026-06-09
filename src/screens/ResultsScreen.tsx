@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
   Animated,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: Colors.textPrimary,
     lineHeight: 28,
-    marginTop: -6,
+    marginTop: Platform.OS === 'ios' ? 8 : -5,
     marginLeft: -2,
   },
   heading: {
