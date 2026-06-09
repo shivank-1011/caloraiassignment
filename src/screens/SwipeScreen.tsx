@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
@@ -12,7 +12,7 @@ import CrossIcon from '../../assets/icons/cross.svg';
 import StarIcon from '../../assets/icons/star.svg';
 import QuestionIcon from '../../assets/icons/question.svg';
 import CarrotIcon from '../../assets/icons/carrot.svg';
-import { Colors, Spacing } from '../constants';
+import { Colors, Spacing, Typography } from '../constants';
 import { RootStackParamList, SwipeDirection, SwipeResult } from '../types';
 import { foods } from '../data';
 
@@ -23,6 +23,7 @@ export default function SwipeScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<SwipeResult[]>([]);
   const topCardRef = useRef<FoodCardRef | null>(null);
+  const isDone = currentIndex >= foods.length;
 
   const handleSwipe = (direction: SwipeDirection) => {
     const food = foods[currentIndex];
@@ -41,31 +42,35 @@ export default function SwipeScreen() {
     if (nextIndex >= foods.length) {
       setTimeout(() => {
         navigation.navigate('Results', { results: newResults });
-      }, 400);
+      }, 500);
     }
   };
 
   const triggerSwipe = (direction: SwipeDirection) => {
-    topCardRef.current?.triggerSwipe(direction);
+    if (!isDone) topCardRef.current?.triggerSwipe(direction);
   };
 
   return (
-    <LinearGradient
-      colors={[Colors.gradientTop, Colors.gradientBottom]}
-      style={styles.root}
-    >
+    <LinearGradient colors={[Colors.gradientTop, Colors.gradientBottom]} style={styles.root}>
       <SafeAreaView style={styles.safe}>
         <View style={styles.progressContainer}>
           <ProgressBar current={currentIndex} total={foods.length} />
         </View>
 
         <View style={styles.cardArea}>
-          <CardStack
-            foods={foods}
-            currentIndex={currentIndex}
-            onSwipe={handleSwipe}
-            topCardRef={topCardRef}
-          />
+          {isDone ? (
+            <View style={styles.doneState}>
+              <ActivityIndicator color={Colors.accent} size="large" />
+              <Text style={styles.doneText}>Building your profile...</Text>
+            </View>
+          ) : (
+            <CardStack
+              foods={foods}
+              currentIndex={currentIndex}
+              onSwipe={handleSwipe}
+              topCardRef={topCardRef}
+            />
+          )}
         </View>
 
         <View style={styles.actions}>
@@ -132,6 +137,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  doneState: {
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  doneText: {
+    color: Colors.textSecondary,
+    fontSize: Typography.base,
+    fontWeight: Typography.medium,
   },
   actions: {
     flexDirection: 'row',
