@@ -1,5 +1,5 @@
-import React, { useImperativeHandle, forwardRef } from 'react';
-import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import React, { useRef } from 'react';
+import { Dimensions, Platform, StyleSheet, Text, View, Image } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -22,21 +22,28 @@ interface FoodCardProps {
   food: Food;
   onSwipe: (direction: SwipeDirection) => void;
   isTop: boolean;
-  stackIndex: number;
 }
 
 export interface FoodCardRef {
   triggerSwipe: (direction: SwipeDirection) => void;
 }
 
-const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
-  ({ food, onSwipe, isTop, stackIndex }, ref) => {
+function SwipeBadge({ label, style }: { label: string; style: object }) {
+  return (
+    <View style={[styles.badge, style]}>
+      <Text style={styles.badgeText}>{label}</Text>
+    </View>
+  );
+}
+
+const FoodCard = React.forwardRef<FoodCardRef, FoodCardProps>(
+  ({ food, onSwipe, isTop }, ref) => {
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
-    const scale = useSharedValue(1 - stackIndex * 0.04);
     const cardOpacity = useSharedValue(1);
 
     const flyOff = (direction: SwipeDirection) => {
+      'worklet';
       const targetX =
         direction === 'like' ? SCREEN_WIDTH * 1.5 :
         direction === 'dislike' ? -SCREEN_WIDTH * 1.5 : 0;
@@ -51,8 +58,10 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
       cardOpacity.value = withTiming(0, { duration: 300 });
     };
 
-    useImperativeHandle(ref, () => ({
-      triggerSwipe: flyOff,
+    React.useImperativeHandle(ref, () => ({
+      triggerSwipe: (direction: SwipeDirection) => {
+        flyOff(direction);
+      },
     }));
 
     const gesture = Gesture.Pan()
@@ -62,13 +71,13 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
         translateY.value = e.translationY;
       })
       .onEnd((e) => {
-        const aboveThresholdX = Math.abs(e.translationX) > Swipe.threshold || Math.abs(e.velocityX) > Swipe.velocityThreshold;
-        const aboveThresholdY = Math.abs(e.translationY) > Swipe.threshold || Math.abs(e.velocityY) > Swipe.velocityThreshold;
+        const aboveX = Math.abs(e.translationX) > Swipe.threshold || Math.abs(e.velocityX) > Swipe.velocityThreshold;
+        const aboveY = Math.abs(e.translationY) > Swipe.threshold || Math.abs(e.velocityY) > Swipe.velocityThreshold;
 
-        if (aboveThresholdX && Math.abs(e.translationX) >= Math.abs(e.translationY)) {
-          runOnJS(flyOff)(e.translationX > 0 ? 'like' : 'dislike');
-        } else if (aboveThresholdY && Math.abs(e.translationY) > Math.abs(e.translationX)) {
-          runOnJS(flyOff)(e.translationY < 0 ? 'superlike' : 'unsure');
+        if (aboveX && Math.abs(e.translationX) >= Math.abs(e.translationY)) {
+          flyOff(e.translationX > 0 ? 'like' : 'dislike');
+        } else if (aboveY && Math.abs(e.translationY) > Math.abs(e.translationX)) {
+          flyOff(e.translationY < 0 ? 'superlike' : 'unsure');
         } else {
           translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
           translateY.value = withSpring(0, { damping: 15, stiffness: 200 });
@@ -87,7 +96,6 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
           { translateX: translateX.value },
           { translateY: translateY.value },
           { rotate: `${rotate}deg` },
-          { scale: scale.value },
         ],
         opacity: cardOpacity.value,
       };
@@ -109,7 +117,7 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
       opacity: interpolate(translateY.value, [0, Swipe.threshold], [0, 1], Extrapolation.CLAMP),
     }));
 
-    const CardInner = () => (
+    const cardContent = (
       <View style={styles.content}>
         <Animated.View style={[styles.badge, styles.likeBadge, likeOpacity]}>
           <Text style={styles.badgeText}>Yes ✓</Text>
@@ -125,7 +133,11 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
         </Animated.View>
 
         <View style={styles.foodContent}>
-          <Text style={styles.emoji}>{getCategoryEmoji(food.category)}</Text>
+          <Image
+            source={{ uri: food.image }}
+            style={styles.foodImage}
+            resizeMode="cover"
+          />
           <Text style={styles.label}>I love eating {food.name.toLowerCase()}</Text>
         </View>
       </View>
@@ -137,12 +149,12 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
           {Platform.OS === 'ios' ? (
             <BlurView intensity={Glass.blurIntensity} tint={Glass.blurTint} style={styles.blurCard}>
               <View style={styles.blurOverlay}>
-                <CardInner />
+                {cardContent}
               </View>
             </BlurView>
           ) : (
             <View style={styles.androidCard}>
-              <CardInner />
+              {cardContent}
             </View>
           )}
         </Animated.View>
@@ -151,14 +163,7 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(
   }
 );
 
-function getCategoryEmoji(category: string): string {
-  switch (category) {
-    case 'protein': return '🥩';
-    case 'carb': return '🍚';
-    case 'vegetable': return '🥗';
-    default: return '🍽️';
-  }
-}
+export default FoodCard;
 
 const styles = StyleSheet.create({
   card: {
@@ -196,14 +201,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
-  emoji: {
-    fontSize: 80,
+  foodImage: {
+    width: 140,
+    height: 140,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   label: {
     fontSize: Typography.xl,
     fontWeight: Typography.semibold,
     color: Colors.textPrimary,
     textAlign: 'center',
+    lineHeight: 30,
   },
   badge: {
     position: 'absolute',
@@ -225,14 +234,14 @@ const styles = StyleSheet.create({
   superlikeBadge: {
     top: Spacing.lg,
     alignSelf: 'center',
-    left: '30%',
     backgroundColor: Colors.superlike,
+    left: '20%',
   },
   unsureBadge: {
     bottom: Spacing.xl,
     alignSelf: 'center',
-    left: '35%',
     backgroundColor: Colors.unsure,
+    left: '30%',
   },
   badgeText: {
     color: Colors.textPrimary,
@@ -240,5 +249,3 @@ const styles = StyleSheet.create({
     fontSize: Typography.md,
   },
 });
-
-export default FoodCard;
