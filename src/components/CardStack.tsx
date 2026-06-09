@@ -27,6 +27,7 @@ export default function CardStack({ foods, currentIndex, onSwipe, topCardRef }: 
         const isTop = stackIndex === 0;
         const offsetY = stackIndex * 10;
         const scale = 1 - stackIndex * 0.04;
+        const opacity = 1 - stackIndex * 0.15;
 
         return (
           <View
@@ -35,6 +36,7 @@ export default function CardStack({ foods, currentIndex, onSwipe, topCardRef }: 
               styles.cardWrapper,
               {
                 transform: [{ translateY: offsetY }, { scale }],
+                opacity: opacity,
                 zIndex: Swipe.stackSize - stackIndex,
                 pointerEvents: isTop ? 'auto' : 'none',
               },

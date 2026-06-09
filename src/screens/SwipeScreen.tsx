@@ -1,23 +1,30 @@
-import React, { useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import CardStack from '../components/CardStack';
-import ProgressBar from '../components/ProgressBar';
-import ActionButton from '../components/ActionButton';
-import { FoodCardRef } from '../components/FoodCard';
-import CrossIcon from '../../assets/icons/cross.svg';
-import StarIcon from '../../assets/icons/star.svg';
-import QuestionIcon from '../../assets/icons/question.svg';
-import CarrotIcon from '../../assets/icons/carrot.svg';
-import { Colors, Spacing, Typography } from '../constants';
+import React, { useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import CardStack from "../components/CardStack";
+import ProgressBar from "../components/ProgressBar";
+import ActionButton from "../components/ActionButton";
+import BackgroundBlobs from "../components/BackgroundBlobs";
+import { FoodCardRef } from "../components/FoodCard";
+import CrossIcon from "../../assets/icons/cross.svg";
+import StarIcon from "../../assets/icons/star.svg";
+import QuestionIcon from "../../assets/icons/question.svg";
+import HeartIcon from "../../assets/icons/heart.svg";
+import { Colors, Spacing, Typography } from "../constants";
 import { RootStackParamList, SwipeDirection, SwipeResult } from '../types';
-import { foods } from '../data';
+import { foods, globalResults } from '../data';
 
-type NavProp = NativeStackNavigationProp<RootStackParamList, 'Swipe'>;
+type NavProp = NativeStackNavigationProp<RootStackParamList, "Swipe">;
 
 export default function SwipeScreen() {
   const navigation = useNavigation<NavProp>();
@@ -35,14 +42,17 @@ export default function SwipeScreen() {
     setCurrentIndex(nextIndex);
 
     Haptics.impactAsync(
-      direction === 'like' || direction === 'superlike'
+      direction === "like" || direction === "superlike"
         ? Haptics.ImpactFeedbackStyle.Medium
-        : Haptics.ImpactFeedbackStyle.Light
+        : Haptics.ImpactFeedbackStyle.Light,
     );
 
     if (nextIndex >= foods.length) {
       setTimeout(() => {
-        navigation.navigate('Results', { results: newResults });
+        // Clear globalResults and push new ones so we mutate it correctly
+        globalResults.length = 0;
+        globalResults.push(...newResults);
+        navigation.navigate("Results", { results: newResults });
       }, 500);
     }
   };
@@ -52,7 +62,11 @@ export default function SwipeScreen() {
   };
 
   return (
-    <LinearGradient colors={[Colors.gradientTop, Colors.gradientBottom]} style={styles.root}>
+    <LinearGradient
+      colors={[Colors.gradientTop, Colors.gradientBottom]}
+      style={styles.root}
+    >
+      <BackgroundBlobs />
       <SafeAreaView style={styles.safe}>
         <View style={styles.progressContainer}>
           <ProgressBar current={currentIndex} total={foods.length} />
@@ -79,44 +93,48 @@ export default function SwipeScreen() {
             <ActionButton
               Icon={CrossIcon}
               iconColor="#FFFFFF"
-              bgColor={Colors.dislike}
+              bgColor="#fa0202"
+              shadowColor="#fa0202"
               size="lg"
-              onPress={() => triggerSwipe('dislike')}
+              onPress={() => triggerSwipe("dislike")}
             />
-            <Text style={[styles.actionLabel, { color: Colors.dislike }]}>Swipe Left</Text>
+            <Text style={[styles.actionLabel]}>Swipe Left</Text>
           </View>
 
           <View style={styles.actionItem}>
             <ActionButton
               Icon={QuestionIcon}
               iconColor="#FFFFFF"
-              bgColor="rgba(255,255,255,0.15)"
+              bgColor="#94A3B8"
+              shadowColor="rgba(255,255,255,0.4)"
               size="sm"
-              onPress={() => triggerSwipe('unsure')}
+              onPress={() => triggerSwipe("unsure")}
             />
-            <Text style={[styles.actionLabel, { color: Colors.unsure }]}>Not Sure</Text>
+            <Text style={[styles.actionLabel]}>Not Sure</Text>
           </View>
 
           <View style={styles.actionItem}>
             <ActionButton
               Icon={StarIcon}
-              iconColor="#FFFFFF"
-              bgColor={Colors.superlike}
+              iconColor="#00E5FF"
+              bgColor={["#7C66FF", "#4FA5FF"]}
+              shadowColor="#4FA5FF"
               size="sm"
-              onPress={() => triggerSwipe('superlike')}
+              onPress={() => triggerSwipe("superlike")}
             />
-            <Text style={[styles.actionLabel, { color: Colors.superlike }]}>Super Like</Text>
+            <Text style={[styles.actionLabel]}>Super Like</Text>
           </View>
 
           <View style={styles.actionItem}>
             <ActionButton
-              Icon={CarrotIcon}
+              Icon={HeartIcon}
               iconColor="#FFFFFF"
-              bgColor={Colors.like}
+              bgColor="#0bd400"
+              shadowColor="#0bd400"
               size="lg"
-              onPress={() => triggerSwipe('like')}
+              onPress={() => triggerSwipe("like")}
             />
-            <Text style={[styles.actionLabel, { color: Colors.like }]}>Swipe Right</Text>
+            <Text style={[styles.actionLabel]}>Swipe Right</Text>
           </View>
         </View>
       </SafeAreaView>
@@ -136,11 +154,11 @@ const styles = StyleSheet.create({
   },
   cardArea: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   doneState: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.md,
   },
   doneText: {
@@ -149,20 +167,23 @@ const styles = StyleSheet.create({
     fontWeight: Typography.medium,
   },
   actions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    gap: Spacing.md,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    gap: Spacing.lg,
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.xl,
   },
   actionItem: {
-    alignItems: 'center',
-    gap: Spacing.xs,
+    alignItems: "center",
+    gap: Spacing.md,
   },
   actionLabel: {
-    fontSize: 10,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontFamily: Platform.OS === "ios" ? "System" : "sans-serif",
+    fontSize: 11.61,
+    lineHeight: 13.93,
+    fontWeight: "500",
+    color: "rgba(255, 255, 255, 0.85)",
+    textAlign: "center",
   },
 });
