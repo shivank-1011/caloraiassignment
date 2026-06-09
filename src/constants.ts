@@ -32,13 +32,20 @@ export const Colors = {
   progressFill: '#4ADE80',
 
   gradientTop: '#0A0A0A',
-  gradientBottom: '#0D1810',
+  gradientBottom: '#18181A',
 
   blobGreen: 'rgba(34, 197, 94, 0.12)',
   blobBlue: 'rgba(59, 130, 246, 0.08)',
 };
 
+import { Platform } from 'react-native';
+
 export const Typography = {
+  fontFamily: Platform.select({
+    ios: 'System',
+    web: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    default: 'Roboto',
+  }),
   xs: 11,
   sm: 13,
   base: 15,

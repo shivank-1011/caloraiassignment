@@ -23,6 +23,7 @@ export interface SwipeResult {
 export type RootStackParamList = {
   Intro: undefined;
   Swipe: undefined;
+  FAQ: undefined;
   Results: {
     results: SwipeResult[];
   };

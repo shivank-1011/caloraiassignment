@@ -10,26 +10,62 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../components/GlassCard';
+import BackgroundBlobs from '../components/BackgroundBlobs';
 import BottomNav from '../components/BottomNav';
 import { Colors, Spacing, Typography, Radius } from '../constants';
 import { RootStackParamList } from '../types';
+import { globalResults } from '../data';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList, 'Intro'>;
 
 export default function IntroScreen() {
   const navigation = useNavigation<NavProp>();
 
+  const handleTabPress = (tab: 'Start' | 'FAQ' | 'TasteProfile' | 'Search') => {
+    if (tab === 'Start') navigation.navigate('Intro');
+    if (tab === 'FAQ') navigation.navigate('FAQ');
+    if (tab === 'TasteProfile') navigation.navigate('Results', { results: globalResults });
+  };
+
   return (
     <LinearGradient
       colors={[Colors.gradientTop, Colors.gradientBottom]}
       style={styles.root}
     >
+      <BackgroundBlobs />
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} activeOpacity={0.7}>
-            <Text style={styles.backIcon}>‹</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.75}>
+            <LinearGradient
+              colors={[
+                "rgba(255,255,255,0.5)",
+                "transparent",
+                "transparent",
+                "rgba(255,255,255,0.5)",
+              ]}
+              locations={[0, 0.35, 0.65, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.backBtnGradient}
+            >
+              <LinearGradient
+                colors={['#18181A', '#0A0A0A']}
+                start={{ x: 0.2, y: 1 }}
+                end={{ x: 0.8, y: 0 }}
+                style={styles.backBtnInner}
+              >
+                <Text style={styles.backIcon}>‹</Text>
+              </LinearGradient>
+            </LinearGradient>
           </TouchableOpacity>
-          <Text style={styles.heading}>Design Your Food Plan</Text>
+
+          <Text 
+            style={styles.heading}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            Design Your Food Plan
+          </Text>
         </View>
 
         <View style={styles.cardWrapper}>
@@ -55,7 +91,7 @@ export default function IntroScreen() {
           </GlassCard>
         </View>
 
-        <BottomNav activeTab="Start" />
+        <BottomNav activeTab="Start" onTabPress={handleTabPress} />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -70,84 +106,116 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xs,
     gap: Spacing.md,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
+  backBtnGradient: {
+    width: 48,
+    height: 48,
     borderRadius: Radius.full,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    padding: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  backBtnInner: {
+    flex: 1,
+    borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   backIcon: {
-    fontSize: 28,
+    fontFamily: Typography.fontFamily,
+    fontSize: 36,
     color: Colors.textPrimary,
-    lineHeight: 32,
+    lineHeight: 28,
+    marginTop: -6,
+    marginLeft: -2,
   },
   heading: {
-    fontSize: Typography['3xl'],
-    fontWeight: Typography.extrabold,
+    fontFamily: Typography.fontFamily,
+    fontSize: 28,
+    fontWeight: '800',
     color: Colors.textPrimary,
-    lineHeight: 40,
+    textAlign: 'center',
   },
   cardWrapper: {
     flex: 1,
     paddingHorizontal: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: Spacing.lg,
   },
   card: {
-    flex: 1,
+    width: '100%',
+    maxWidth: 400,
   },
   cardInner: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: Spacing.xl,
-    gap: Spacing.md,
+    paddingVertical: 40,
+    paddingHorizontal: 24,
   },
   mainEmoji: {
     fontSize: 72,
+    lineHeight: 80,
+    marginBottom: 16,
   },
   cardTitle: {
-    fontSize: Typography['2xl'],
-    fontWeight: Typography.bold,
+    fontFamily: Typography.fontFamily,
+    fontSize: 28,
+    fontWeight: '700',
     color: Colors.textPrimary,
     textAlign: 'center',
+    marginBottom: 16,
   },
   cardBody: {
-    fontSize: Typography.base,
-    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily,
+    fontSize: 16,
+    color: 'rgba(217, 217, 217, 1)',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    maxWidth: 320,
+    marginBottom: 20,
   },
   cardSubBody: {
-    fontSize: Typography.base,
-    color: Colors.textSecondary,
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    color: 'rgba(217, 217, 217, 1)',
     textAlign: 'center',
     lineHeight: 22,
+    maxWidth: 320,
+    marginBottom: 32,
   },
   ctaButton: {
-    backgroundColor: Colors.accent,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing['2xl'],
-    marginTop: Spacing.sm,
-    shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 4 },
+    backgroundColor: 'rgba(75, 216, 131, 1)',
+    borderRadius: 100,
+    minWidth: 220,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowRadius: 20,
     elevation: 8,
   },
   ctaText: {
-    fontSize: Typography.md,
-    fontWeight: Typography.bold,
-    color: '#0A0A0A',
+    fontFamily: Typography.fontFamily,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
     textAlign: 'center',
   },
   hint: {
-    fontSize: Typography.sm,
-    color: Colors.textMuted,
+    fontFamily: Typography.fontFamily,
+    fontSize: 14,
+    color: 'rgba(217, 217, 217, 1)',
   },
 });
