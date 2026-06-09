@@ -1,14 +1,15 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity, ViewStyle, View } from 'react-native';
 import { SvgProps } from 'react-native-svg';
-import { Radius } from '../constants';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface ActionButtonProps {
   Icon: React.FC<SvgProps>;
   iconColor?: string;
   iconSize?: number;
-  bgColor: string;
+  bgColor: string | string[]; // Can be an array for gradient backgrounds (Superlike)
   size?: 'sm' | 'lg';
+  shadowColor?: string;
   onPress: () => void;
   style?: ViewStyle;
 }
@@ -19,40 +20,80 @@ export default function ActionButton({
   iconSize,
   bgColor,
   size = 'sm',
+  shadowColor = '#000',
   onPress,
   style,
 }: ActionButtonProps) {
-  const dimension = size === 'lg' ? 64 : 52;
-  const resolvedIconSize = iconSize ?? (size === 'lg' ? 24 : 20);
+  const dimension = size === 'lg' ? 72 : 48;
+  const resolvedIconSize = iconSize ?? (size === 'lg' ? 28 : 24);
+  const isGradientBg = Array.isArray(bgColor);
 
-  return (
+  const InnerContent = () => (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.75}
+      activeOpacity={0.8}
       style={[
-        styles.button,
-        {
-          width: dimension,
-          height: dimension,
-          borderRadius: dimension / 2,
-          backgroundColor: bgColor,
-        },
-        style,
+        styles.innerBtn,
+        !isGradientBg && { backgroundColor: bgColor as string },
       ]}
     >
       <Icon width={resolvedIconSize} height={resolvedIconSize} color={iconColor} />
     </TouchableOpacity>
   );
+
+  return (
+    <View
+      style={[
+        styles.shadowContainer,
+        {
+          width: dimension,
+          height: dimension,
+          borderRadius: dimension / 2,
+          shadowColor: shadowColor,
+        },
+        style,
+      ]}
+    >
+      <LinearGradient
+        colors={['rgba(255,255,255,1)', 'transparent', 'transparent', 'rgba(255,255,255,1)']}
+        locations={[0, 0.35, 0.65, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.borderGradient, { borderRadius: dimension / 2 }]}
+      >
+        {isGradientBg ? (
+          <LinearGradient
+            colors={bgColor as unknown as readonly [string, string, ...string[]]}
+            style={[styles.innerGradient, { borderRadius: dimension / 2 }]}
+          >
+            <InnerContent />
+          </LinearGradient>
+        ) : (
+          <InnerContent />
+        )}
+      </LinearGradient>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  button: {
+  shadowContainer: {
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  borderGradient: {
+    flex: 1,
+    padding: 1, // 1px border thickness
+  },
+  innerGradient: {
+    flex: 1,
+  },
+  innerBtn: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
+    borderRadius: 9999,
   },
 });
