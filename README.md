@@ -4,36 +4,27 @@ A **React Native / Expo** mobile app that lets users build a food preference pro
 
 ---
 
-## 📱 Try the App — Live on Expo Go
+## 📱 Running the App
 
-> **Requires [Expo Go](https://expo.dev/client) installed on your device.**
->
-> This project uses **EAS Update** — the JS bundle is hosted on Expo's CDN and loads directly inside Expo Go without any build step.
+> **Requires [Expo Go](https://expo.dev/client) installed on your physical device (iOS or Android), or a simulator/emulator.**
 
-### How to open
+```bash
+# 1. Clone the repo
+git clone https://github.com/shivank-1011/caloraiassignment.git
+cd caloraiassignment
 
-**Option 1 — Deep link (tap on your device)**
+# 2. Install dependencies
+npm install
 
+# 3. Start the Metro bundler
+npx expo start
 ```
-exp://u.expo.dev/a925ee3c-804f-43f1-808b-da64ec46bda2/group/9d76efc9-c45a-4a8f-a3bb-f77529abe508
-```
 
-**Option 2 — Scan this QR code with Expo Go**
+Then:
+- **iOS** — Press `i` to open in the iOS Simulator, or scan the QR with the **Camera app** on a real device
+- **Android** — Press `a` to open in an Android Emulator, or scan the QR with the **Expo Go** app on a real device
 
-![Scan with Expo Go](./assets/qr.png)
-
-> Scan with the **Expo Go** app (Android) or the **Camera app** (iOS)
-
-| Field | Value |
-|---|---|
-| **Expo project** | `@shivankgupta/calorai` |
-| **Branch** | `main` (always latest) |
-| **Runtime version** | `exposdk:54.0.0` |
-| **Latest update group** | `9d76efc9-c45a-4a8f-a3bb-f77529abe508` |
-| **EAS Dashboard** | [View on expo.dev](https://expo.dev/accounts/shivankgupta/projects/calorai/updates/9d76efc9-c45a-4a8f-a3bb-f77529abe508) |
-| **Platform** | iOS + Android |
-
-> ✅ Uses `runtimeVersion: { policy: "sdkVersion" }` — fully compatible with Expo Go out of the box. Just scan and go.
+> **SDK version note:** This project targets **Expo SDK 54**. Make sure your Expo Go app is up-to-date to avoid version mismatch warnings.
 
 ---
 
@@ -46,35 +37,6 @@ exp://u.expo.dev/a925ee3c-804f-43f1-808b-da64ec46bda2/group/9d76efc9-c45a-4a8f-a
 | **Results** | Taste Profile breakdown — personas, lifestyle traits, food categories as a swipeable carousel |
 | **FAQ** | Dummy FAQ screen accessible from the bottom nav |
 
----
-
-## Setup & Installation
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) 18+
-- [Expo Go](https://expo.dev/client) installed on your physical device (iOS or Android)
-- Or an iOS Simulator / Android Emulator
-
-### Steps
-
-```bash
-# 1. Clone the repo
-git clone <repo-url>
-cd caloraiassignment
-
-# 2. Install dependencies
-npm install
-
-# 3. Start the dev server
-npx expo start
-```
-
-4. Scan the QR code with **Expo Go** (Android) or the **Camera app** (iOS)
-
-> **Note:** This project targets **Expo SDK 54** for compatibility with the current Expo Go version. If you see a version mismatch warning, make sure your Expo Go app is up-to-date.
-
----
 
 ## Libraries Used & Why
 

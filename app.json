@@ -20,18 +20,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "a925ee3c-804f-43f1-808b-da64ec46bda2"
-      }
-    },
-    "owner": "shivankgupta",
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/a925ee3c-804f-43f1-808b-da64ec46bda2"
     }
   }
 }
