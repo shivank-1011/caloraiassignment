@@ -43,7 +43,6 @@ const FoodCard = React.forwardRef<FoodCardRef, FoodCardProps>(
     const cardOpacity = useSharedValue(1);
 
     const flyOff = (direction: SwipeDirection) => {
-      'worklet';
       const targetX =
         direction === 'like' ? SCREEN_WIDTH * 1.5 :
         direction === 'dislike' ? -SCREEN_WIDTH * 1.5 : 0;
@@ -64,6 +63,8 @@ const FoodCard = React.forwardRef<FoodCardRef, FoodCardProps>(
       },
     }));
 
+    const flyOffJS = runOnJS(flyOff);
+
     const gesture = Gesture.Pan()
       .enabled(isTop)
       .onUpdate((e) => {
@@ -75,9 +76,9 @@ const FoodCard = React.forwardRef<FoodCardRef, FoodCardProps>(
         const aboveY = Math.abs(e.translationY) > Swipe.threshold || Math.abs(e.velocityY) > Swipe.velocityThreshold;
 
         if (aboveX && Math.abs(e.translationX) >= Math.abs(e.translationY)) {
-          flyOff(e.translationX > 0 ? 'like' : 'dislike');
+          flyOffJS(e.translationX > 0 ? 'like' : 'dislike');
         } else if (aboveY && Math.abs(e.translationY) > Math.abs(e.translationX)) {
-          flyOff(e.translationY < 0 ? 'superlike' : 'unsure');
+          flyOffJS(e.translationY < 0 ? 'superlike' : 'unsure');
         } else {
           translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
           translateY.value = withSpring(0, { damping: 15, stiffness: 200 });
