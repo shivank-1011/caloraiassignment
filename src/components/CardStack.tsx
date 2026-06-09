@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { Food, SwipeDirection } from '../types';
 import FoodCard, { FoodCardRef } from './FoodCard';
@@ -30,22 +30,21 @@ export default function CardStack({ foods, currentIndex, onSwipe, topCardRef }: 
 
         return (
           <View
-            key={food.id}
+            key={`${food.id}-${currentIndex}`}
             style={[
               styles.cardWrapper,
               {
                 transform: [{ translateY: offsetY }, { scale }],
                 zIndex: Swipe.stackSize - stackIndex,
+                pointerEvents: isTop ? 'auto' : 'none',
               },
             ]}
-            pointerEvents={isTop ? 'auto' : 'none'}
           >
             <FoodCard
               ref={isTop ? topCardRef : undefined}
               food={food}
               onSwipe={onSwipe}
               isTop={isTop}
-              stackIndex={stackIndex}
             />
           </View>
         );
