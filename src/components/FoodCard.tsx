@@ -71,7 +71,7 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(({ food, onSwipe, isTop 
     Animated.timing(position, {
       toValue: { x: targetX, y: targetY },
       duration: 350,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start(() => onSwipe(direction));
   };
 
@@ -81,10 +81,9 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(({ food, onSwipe, isTop 
     PanResponder.create({
       onStartShouldSetPanResponder: () => isTop,
       onMoveShouldSetPanResponder: () => isTop,
-      onPanResponderMove: Animated.event(
-        [null, { dx: position.x, dy: position.y }],
-        { useNativeDriver: false }
-      ),
+      onPanResponderMove: (_, g) => {
+        position.setValue({ x: g.dx, y: g.dy });
+      },
       onPanResponderRelease: (_, g) => {
         const aboveX = Math.abs(g.dx) > Swipe.threshold || Math.abs(g.vx) > 0.5;
         const aboveY = Math.abs(g.dy) > Swipe.threshold || Math.abs(g.vy) > 0.5;
@@ -96,7 +95,7 @@ const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(({ food, onSwipe, isTop 
         } else {
           Animated.spring(position, {
             toValue: { x: 0, y: 0 },
-            useNativeDriver: true,
+            useNativeDriver: false,
           }).start();
         }
       },

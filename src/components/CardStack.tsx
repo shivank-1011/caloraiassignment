@@ -23,7 +23,7 @@ export default function CardStack({ foods, currentIndex, onSwipe, topCardRef }: 
   return (
     <View style={styles.stack}>
       {visibleCards.map((food, reversedIndex) => {
-        const stackIndex = Swipe.stackSize - 1 - reversedIndex;
+        const stackIndex = visibleCards.length - 1 - reversedIndex;
         const isTop = stackIndex === 0;
         const offsetY = stackIndex * 10;
         const scale = 1 - stackIndex * 0.04;
