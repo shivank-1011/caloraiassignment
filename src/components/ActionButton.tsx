@@ -1,18 +1,29 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
-import { Colors, Radius } from '../constants';
+import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { SvgProps } from 'react-native-svg';
+import { Radius } from '../constants';
 
 interface ActionButtonProps {
-  icon: string;
-  color: string;
+  Icon: React.FC<SvgProps>;
+  iconColor?: string;
+  iconSize?: number;
+  bgColor: string;
   size?: 'sm' | 'lg';
   onPress: () => void;
   style?: ViewStyle;
 }
 
-export default function ActionButton({ icon, color, size = 'sm', onPress, style }: ActionButtonProps) {
+export default function ActionButton({
+  Icon,
+  iconColor = '#FFFFFF',
+  iconSize,
+  bgColor,
+  size = 'sm',
+  onPress,
+  style,
+}: ActionButtonProps) {
   const dimension = size === 'lg' ? 64 : 52;
-  const fontSize = size === 'lg' ? 26 : 22;
+  const resolvedIconSize = iconSize ?? (size === 'lg' ? 24 : 20);
 
   return (
     <TouchableOpacity
@@ -20,11 +31,16 @@ export default function ActionButton({ icon, color, size = 'sm', onPress, style 
       activeOpacity={0.75}
       style={[
         styles.button,
-        { width: dimension, height: dimension, borderRadius: dimension / 2, backgroundColor: color },
+        {
+          width: dimension,
+          height: dimension,
+          borderRadius: dimension / 2,
+          backgroundColor: bgColor,
+        },
         style,
       ]}
     >
-      <Text style={[styles.icon, { fontSize }]}>{icon}</Text>
+      <Icon width={resolvedIconSize} height={resolvedIconSize} color={iconColor} />
     </TouchableOpacity>
   );
 }
@@ -38,8 +54,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 8,
-  },
-  icon: {
-    textAlign: 'center',
   },
 });
