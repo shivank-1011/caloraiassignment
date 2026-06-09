@@ -1,22 +1,25 @@
-import React, { useRef } from 'react';
-import { Dimensions, Platform, StyleSheet, Text, View, Image } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  interpolate,
-  Extrapolation,
-} from 'react-native-reanimated';
+import React, { useRef, forwardRef, useImperativeHandle } from 'react';
+import {
+  Animated,
+  Dimensions,
+  Image,
+  PanResponder,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Food, SwipeDirection } from '../types';
-import { Colors, Radius, Spacing, Swipe, Typography, Glass } from '../constants';
+import { Colors, Glass, Radius, Spacing, Swipe, Typography } from '../constants';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - Spacing.lg * 2;
 const CARD_HEIGHT = CARD_WIDTH * 1.35;
+
+export interface FoodCardRef {
+  triggerSwipe: (direction: SwipeDirection) => void;
+}
 
 interface FoodCardProps {
   food: Food;
@@ -24,145 +27,122 @@ interface FoodCardProps {
   isTop: boolean;
 }
 
-export interface FoodCardRef {
-  triggerSwipe: (direction: SwipeDirection) => void;
-}
+const FoodCard = forwardRef<FoodCardRef, FoodCardProps>(({ food, onSwipe, isTop }, ref) => {
+  const position = useRef(new Animated.ValueXY()).current;
 
-function SwipeBadge({ label, style }: { label: string; style: object }) {
-  return (
-    <View style={[styles.badge, style]}>
-      <Text style={styles.badgeText}>{label}</Text>
+  const rotate = position.x.interpolate({
+    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
+    outputRange: [`-${Swipe.cardRotationMax}deg`, '0deg', `${Swipe.cardRotationMax}deg`],
+    extrapolate: 'clamp',
+  });
+
+  const likeOpacity = position.x.interpolate({
+    inputRange: [0, Swipe.threshold],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const dislikeOpacity = position.x.interpolate({
+    inputRange: [-Swipe.threshold, 0],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const superlikeOpacity = position.y.interpolate({
+    inputRange: [-Swipe.threshold, 0],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const unsureOpacity = position.y.interpolate({
+    inputRange: [0, Swipe.threshold],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const flyOff = (direction: SwipeDirection) => {
+    const targetX =
+      direction === 'like' ? SCREEN_WIDTH * 1.5 :
+      direction === 'dislike' ? -SCREEN_WIDTH * 1.5 : 0;
+    const targetY =
+      direction === 'superlike' ? -SCREEN_WIDTH * 1.5 :
+      direction === 'unsure' ? SCREEN_WIDTH * 1.5 : 0;
+
+    Animated.timing(position, {
+      toValue: { x: targetX, y: targetY },
+      duration: 350,
+      useNativeDriver: true,
+    }).start(() => onSwipe(direction));
+  };
+
+  useImperativeHandle(ref, () => ({ triggerSwipe: flyOff }));
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => isTop,
+      onMoveShouldSetPanResponder: () => isTop,
+      onPanResponderMove: Animated.event(
+        [null, { dx: position.x, dy: position.y }],
+        { useNativeDriver: false }
+      ),
+      onPanResponderRelease: (_, g) => {
+        const aboveX = Math.abs(g.dx) > Swipe.threshold || Math.abs(g.vx) > 0.5;
+        const aboveY = Math.abs(g.dy) > Swipe.threshold || Math.abs(g.vy) > 0.5;
+
+        if (aboveX && Math.abs(g.dx) >= Math.abs(g.dy)) {
+          flyOff(g.dx > 0 ? 'like' : 'dislike');
+        } else if (aboveY && Math.abs(g.dy) > Math.abs(g.dx)) {
+          flyOff(g.dy < 0 ? 'superlike' : 'unsure');
+        } else {
+          Animated.spring(position, {
+            toValue: { x: 0, y: 0 },
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  const cardContent = (
+    <View style={styles.content}>
+      <Animated.View style={[styles.badge, styles.likeBadge, { opacity: likeOpacity }]}>
+        <Text style={styles.badgeText}>Yes ✓</Text>
+      </Animated.View>
+      <Animated.View style={[styles.badge, styles.dislikeBadge, { opacity: dislikeOpacity }]}>
+        <Text style={styles.badgeText}>No ✕</Text>
+      </Animated.View>
+      <Animated.View style={[styles.badge, styles.superlikeBadge, { opacity: superlikeOpacity }]}>
+        <Text style={styles.badgeText}>Superlike ⭐</Text>
+      </Animated.View>
+      <Animated.View style={[styles.badge, styles.unsureBadge, { opacity: unsureOpacity }]}>
+        <Text style={styles.badgeText}>Unsure</Text>
+      </Animated.View>
+
+      <View style={styles.foodContent}>
+        <Image source={{ uri: food.image }} style={styles.foodImage} resizeMode="cover" />
+        <Text style={styles.label}>I love eating {food.name.toLowerCase()}</Text>
+      </View>
     </View>
   );
-}
 
-const FoodCard = React.forwardRef<FoodCardRef, FoodCardProps>(
-  ({ food, onSwipe, isTop }, ref) => {
-    const translateX = useSharedValue(0);
-    const translateY = useSharedValue(0);
-    const cardOpacity = useSharedValue(1);
-
-    const flyOff = (direction: SwipeDirection) => {
-      const targetX =
-        direction === 'like' ? SCREEN_WIDTH * 1.5 :
-        direction === 'dislike' ? -SCREEN_WIDTH * 1.5 : 0;
-      const targetY =
-        direction === 'superlike' ? -SCREEN_WIDTH * 1.5 :
-        direction === 'unsure' ? SCREEN_WIDTH * 1.5 : 0;
-
-      translateX.value = withTiming(targetX, { duration: 350 });
-      translateY.value = withTiming(targetY, { duration: 350 }, (finished) => {
-        if (finished) runOnJS(onSwipe)(direction);
-      });
-      cardOpacity.value = withTiming(0, { duration: 300 });
-    };
-
-    React.useImperativeHandle(ref, () => ({
-      triggerSwipe: (direction: SwipeDirection) => {
-        flyOff(direction);
-      },
-    }));
-
-    const flyOffJS = runOnJS(flyOff);
-
-    const gesture = Gesture.Pan()
-      .enabled(isTop)
-      .onUpdate((e) => {
-        translateX.value = e.translationX;
-        translateY.value = e.translationY;
-      })
-      .onEnd((e) => {
-        const aboveX = Math.abs(e.translationX) > Swipe.threshold || Math.abs(e.velocityX) > Swipe.velocityThreshold;
-        const aboveY = Math.abs(e.translationY) > Swipe.threshold || Math.abs(e.velocityY) > Swipe.velocityThreshold;
-
-        if (aboveX && Math.abs(e.translationX) >= Math.abs(e.translationY)) {
-          flyOffJS(e.translationX > 0 ? 'like' : 'dislike');
-        } else if (aboveY && Math.abs(e.translationY) > Math.abs(e.translationX)) {
-          flyOffJS(e.translationY < 0 ? 'superlike' : 'unsure');
-        } else {
-          translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
-          translateY.value = withSpring(0, { damping: 15, stiffness: 200 });
-        }
-      });
-
-    const cardStyle = useAnimatedStyle(() => {
-      const rotate = interpolate(
-        translateX.value,
-        [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-        [-Swipe.cardRotationMax, 0, Swipe.cardRotationMax],
-        Extrapolation.CLAMP
-      );
-      return {
-        transform: [
-          { translateX: translateX.value },
-          { translateY: translateY.value },
-          { rotate: `${rotate}deg` },
-        ],
-        opacity: cardOpacity.value,
-      };
-    });
-
-    const likeOpacity = useAnimatedStyle(() => ({
-      opacity: interpolate(translateX.value, [0, Swipe.threshold], [0, 1], Extrapolation.CLAMP),
-    }));
-
-    const dislikeOpacity = useAnimatedStyle(() => ({
-      opacity: interpolate(translateX.value, [-Swipe.threshold, 0], [1, 0], Extrapolation.CLAMP),
-    }));
-
-    const superlikeOpacity = useAnimatedStyle(() => ({
-      opacity: interpolate(translateY.value, [-Swipe.threshold, 0], [1, 0], Extrapolation.CLAMP),
-    }));
-
-    const unsureOpacity = useAnimatedStyle(() => ({
-      opacity: interpolate(translateY.value, [0, Swipe.threshold], [0, 1], Extrapolation.CLAMP),
-    }));
-
-    const cardContent = (
-      <View style={styles.content}>
-        <Animated.View style={[styles.badge, styles.likeBadge, likeOpacity]}>
-          <Text style={styles.badgeText}>Yes ✓</Text>
-        </Animated.View>
-        <Animated.View style={[styles.badge, styles.dislikeBadge, dislikeOpacity]}>
-          <Text style={styles.badgeText}>No ✕</Text>
-        </Animated.View>
-        <Animated.View style={[styles.badge, styles.superlikeBadge, superlikeOpacity]}>
-          <Text style={styles.badgeText}>Superlike ⭐</Text>
-        </Animated.View>
-        <Animated.View style={[styles.badge, styles.unsureBadge, unsureOpacity]}>
-          <Text style={styles.badgeText}>Unsure</Text>
-        </Animated.View>
-
-        <View style={styles.foodContent}>
-          <Image
-            source={{ uri: food.image }}
-            style={styles.foodImage}
-            resizeMode="cover"
-          />
-          <Text style={styles.label}>I love eating {food.name.toLowerCase()}</Text>
-        </View>
-      </View>
-    );
-
-    return (
-      <GestureDetector gesture={gesture}>
-        <Animated.View style={[styles.card, cardStyle]}>
-          {Platform.OS === 'ios' ? (
-            <BlurView intensity={Glass.blurIntensity} tint={Glass.blurTint} style={styles.blurCard}>
-              <View style={styles.blurOverlay}>
-                {cardContent}
-              </View>
-            </BlurView>
-          ) : (
-            <View style={styles.androidCard}>
-              {cardContent}
-            </View>
-          )}
-        </Animated.View>
-      </GestureDetector>
-    );
-  }
-);
+  return (
+    <Animated.View
+      style={[
+        styles.card,
+        { transform: [...position.getTranslateTransform(), { rotate }] },
+      ]}
+      {...panResponder.panHandlers}
+    >
+      {Platform.OS === 'ios' ? (
+        <BlurView intensity={Glass.blurIntensity} tint={Glass.blurTint} style={styles.blurCard}>
+          <View style={styles.blurOverlay}>{cardContent}</View>
+        </BlurView>
+      ) : (
+        <View style={styles.androidCard}>{cardContent}</View>
+      )}
+    </Animated.View>
+  );
+});
 
 export default FoodCard;
 
@@ -222,28 +202,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     zIndex: 10,
   },
-  likeBadge: {
-    top: Spacing.lg,
-    right: Spacing.lg,
-    backgroundColor: Colors.like,
-  },
-  dislikeBadge: {
-    top: Spacing.lg,
-    left: Spacing.lg,
-    backgroundColor: Colors.dislike,
-  },
-  superlikeBadge: {
-    top: Spacing.lg,
-    alignSelf: 'center',
-    backgroundColor: Colors.superlike,
-    left: '20%',
-  },
-  unsureBadge: {
-    bottom: Spacing.xl,
-    alignSelf: 'center',
-    backgroundColor: Colors.unsure,
-    left: '30%',
-  },
+  likeBadge: { top: Spacing.lg, right: Spacing.lg, backgroundColor: Colors.like },
+  dislikeBadge: { top: Spacing.lg, left: Spacing.lg, backgroundColor: Colors.dislike },
+  superlikeBadge: { top: Spacing.lg, alignSelf: 'center', left: '20%', backgroundColor: Colors.superlike },
+  unsureBadge: { bottom: Spacing.xl, alignSelf: 'center', left: '30%', backgroundColor: Colors.unsure },
   badgeText: {
     color: Colors.textPrimary,
     fontWeight: Typography.bold,
